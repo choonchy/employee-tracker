@@ -51,6 +51,10 @@ const viewMenu = () => {
 		.then((answer) => {
 			if (answer.viewMenu === 'Employees') {
 				viewEmployees();
+			} else if (answer.viewMenu === 'Roles') {
+				viewRoles();
+			} else if (answer.viewMenu === 'Departments') {
+				viewDepartments();
 			}
 		});
 };
@@ -68,15 +72,15 @@ const viewEmployees = () => {
 			console.table(res);
 			inquirer
 				.prompt({
-					name: 'viewEmployees',
+					name: 'resultMenu',
 					type: 'list',
 					message: 'What would you like to do next?',
 					choices: ['View something else', 'Go to main menu', 'Exit'],
 				})
 				.then((answer) => {
-					if (answer.viewEmployees === 'View something else') {
+					if (answer.resultMenu === 'View something else') {
 						viewMenu();
-					} else if (answer.viewEmployees === 'Go to main menu') {
+					} else if (answer.resultMenu === 'Go to main menu') {
 						start();
 					} else {
 						console.log('Goodbye! :D');
@@ -85,6 +89,83 @@ const viewEmployees = () => {
 				});
 		}
 	);
+};
+
+const addEmployee = () => {
+    inquirer
+        .prompt({
+            name: 'firstName',
+            type: 'input',
+            message: 'What is the employee\'s first name?'
+        })
+        .prompt({
+            name: 'lastName',
+            type: 'input',
+            message: 'What is the employee\'s last name?'
+        })
+        .prompt({
+            name: 'addEmployee',
+            type: 'input',
+            message: 'What is the employee\'s first name?'
+        })
+    connection.query(
+        `INSERT INTO employees (first_name, last_name, role_id, manager_id)
+        VALUES (${}, )`
+    )
+}
+
+const viewRoles = () => {
+	connection.query(
+		`SELECT roles.id, roles.title, roles.salary, departments.name as department
+        FROM roles
+        LEFT JOIN departments ON roles.department_id = departments.id
+        ORDER BY roles.id`,
+		(err, res) => {
+			if (err) throw err;
+			console.table(res);
+			inquirer
+				.prompt({
+					name: 'resultMenu',
+					type: 'list',
+					message: 'What would you like to do next?',
+					choices: ['View something else', 'Go to main menu', 'Exit'],
+				})
+				.then((answer) => {
+					if (answer.resultMenu === 'View something else') {
+						viewMenu();
+					} else if (answer.resultMenu === 'Go to main menu') {
+						start();
+					} else {
+						console.log('Goodbye! :D');
+						connection.end();
+					}
+				});
+		}
+	);
+};
+
+const viewDepartments = () => {
+	connection.query(`SELECT * FROM departments`, (err, res) => {
+		if (err) throw err;
+		console.table(res);
+		inquirer
+			.prompt({
+				name: 'resultMenu',
+				type: 'list',
+				message: 'What would you like to do next?',
+				choices: ['View something else', 'Go to main menu', 'Exit'],
+			})
+			.then((answer) => {
+				if (answer.resultMenu === 'View something else') {
+					viewMenu();
+				} else if (answer.resultMenu === 'Go to main menu') {
+					start();
+				} else {
+					console.log('Goodbye! :D');
+					connection.end();
+				}
+			});
+	});
 };
 
 connection.connect((err) => {

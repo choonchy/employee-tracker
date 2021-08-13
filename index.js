@@ -171,8 +171,6 @@ const updateEmployee = () => {
 		`SELECT * FROM employees; SELECT * FROM roles`,
 		(err, res) => {
 			if (err) throw err;
-			console.log(res[0]);
-			console.log(res[1]);
 			const employees = res[0].map((employee) => {
 				return `${employee.first_name} ${employee.last_name}`;
 			});

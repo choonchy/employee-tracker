@@ -64,15 +64,15 @@ const addMenu = () => {
 			name: 'addMenu',
 			type: 'list',
 			message: 'What would you like to add?',
-			choices: ['Employees', 'Roles', 'Departments'],
+			choices: ['Employee', 'Role', 'Department'],
 		})
 		.then((answer) => {
-			if (answer.addMenu === 'Employees') {
+			if (answer.addMenu === 'Employee') {
 				addEmployee();
-			} else if (answer.addMenu === 'Roles') {
-				viewRoles();
-			} else if (answer.addMenu === 'Departments') {
-				viewDepartments();
+			} else if (answer.addMenu === 'Role') {
+				addRole();
+			} else if (answer.addMenu === 'Department') {
+				addDepartment();
 			}
 		});
 };
@@ -131,9 +131,7 @@ const addEmployee = () => {
 					name: 'role',
 					type: 'list',
 					message: "What is the employee's role?",
-					choices: res.map((role) => {
-						return role.title;
-					}),
+					choices: roles,
 				},
 			])
 			.then((answer) => {
@@ -198,6 +196,65 @@ const viewRoles = () => {
 	);
 };
 
+const addRole = () => {
+	connection.query(`SELECT * FROM departments`, (err, res) => {
+		if (err) throw err;
+		const departments = res.map((department) => {
+			return department.name;
+		});
+		inquirer
+			.prompt([
+				{
+					name: 'title',
+					type: 'input',
+					message: 'What is the title of the new role?',
+				},
+				{
+					name: 'salary',
+					type: 'input',
+					message: 'What is the salary of this role?',
+				},
+				{
+					name: 'department',
+					type: 'list',
+					message: 'What department does this role belong to?',
+					choices: departments,
+				},
+			])
+			.then((answer) => {
+				connection.query(
+					`INSERT INTO roles (title, salary, department_id)
+                    VALUES ("${answer.title}", ${answer.salary}, ${
+						departments.findIndex(
+							(department) => department === answer.department
+						) + 1
+					})`,
+					(err, res) => {
+						if (err) throw err;
+						console.log('Success!');
+						inquirer
+							.prompt({
+								name: 'resultMenu',
+								type: 'list',
+								message: 'What would you like to do next?',
+								choices: ['Add something else', 'Go to main menu', 'Exit'],
+							})
+							.then((answer) => {
+								if (answer.resultMenu === 'Add something else') {
+									addMenu();
+								} else if (answer.resultMenu === 'Go to main menu') {
+									start();
+								} else {
+									console.log('Goodbye! :D');
+									connection.end();
+								}
+							});
+					}
+				);
+			});
+	});
+};
+
 const viewDepartments = () => {
 	connection.query(`SELECT * FROM departments`, (err, res) => {
 		if (err) throw err;
@@ -220,6 +277,42 @@ const viewDepartments = () => {
 				}
 			});
 	});
+};
+
+const addDepartment = () => {
+	inquirer
+		.prompt({
+			name: 'department',
+			type: 'input',
+			message: 'What is the name of the new department?',
+		})
+		.then((answer) => {
+			connection.query(
+				`INSERT INTO departments (name)
+                VALUES ("${answer.department}")`,
+				(err, res) => {
+					if (err) throw err;
+					console.log('Success!');
+					inquirer
+						.prompt({
+							name: 'resultMenu',
+							type: 'list',
+							message: 'What would you like to do next?',
+							choices: ['Add something else', 'Go to main menu', 'Exit'],
+						})
+						.then((answer) => {
+							if (answer.resultMenu === 'Add something else') {
+								addMenu();
+							} else if (answer.resultMenu === 'Go to main menu') {
+								start();
+							} else {
+								console.log('Goodbye! :D');
+								connection.end();
+							}
+						});
+				}
+			);
+		});
 };
 
 connection.connect((err) => {

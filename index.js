@@ -9,6 +9,7 @@ const connection = mysql.createConnection({
 	user: 'root',
 	password: process.env.DB_PW,
 	database: 'company_db',
+	multipleStatements: true,
 });
 
 const start = () => {
@@ -20,7 +21,7 @@ const start = () => {
 			choices: [
 				'View something',
 				'Add something',
-				'Update something',
+				"Update an employee's role",
 				'Exit the app',
 			],
 		})
@@ -29,9 +30,8 @@ const start = () => {
 				viewMenu();
 			} else if (answer.appNav === 'Add something') {
 				addMenu();
-			} else if (answer.appNav === 'Update something') {
-				console.log('Goodbye! :D');
-				connection.end();
+			} else if (answer.appNav === "Update an employee's role") {
+				updateEmployee();
 			} else {
 				console.log('Goodbye! :D');
 				connection.end();
@@ -164,6 +164,76 @@ const addEmployee = () => {
 				);
 			});
 	});
+};
+
+const updateEmployee = () => {
+	connection.query(
+		`SELECT * FROM employees; SELECT * FROM roles`,
+		(err, res) => {
+			if (err) throw err;
+			console.log(res[0]);
+			console.log(res[1]);
+			const employees = res[0].map((employee) => {
+				return `${employee.first_name} ${employee.last_name}`;
+			});
+			const roles = res[1].map((role) => {
+				return role.title;
+			});
+			inquirer
+				.prompt([
+					{
+						name: 'employee',
+						type: 'list',
+						message: 'What employee would you like to update?',
+						choices: employees,
+					},
+					{
+						name: 'role',
+						type: 'list',
+						message: 'What role will this employee now have?',
+						choices: roles,
+					},
+				])
+				.then((answer) => {
+					connection.query(
+						`UPDATE employees
+                        SET role_id = ${
+													roles.findIndex((role) => role === answer.role) + 1
+												}
+                        WHERE id = ${
+													employees.findIndex(
+														(employee) => employee === answer.employee
+													) + 1
+												}`,
+						(err, res) => {
+							if (err) throw err;
+							console.log('Success!');
+							inquirer
+								.prompt({
+									name: 'resultMenu',
+									type: 'list',
+									message: 'What would you like to do next?',
+									choices: [
+										'Update another employee',
+										'Go to main menu',
+										'Exit',
+									],
+								})
+								.then((answer) => {
+									if (answer.resultMenu === 'Update another employee') {
+										updateEmployee();
+									} else if (answer.resultMenu === 'Go to main menu') {
+										start();
+									} else {
+										console.log('Goodbye! :D');
+										connection.end();
+									}
+								});
+						}
+					);
+				});
+		}
+	);
 };
 
 const viewRoles = () => {
